@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>eCPM Intelligence | Executive Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --navy:#0e1b30; --navy2:#152847; --ivory:#f7f5ef; --paper:#ffffff;
+  --ink:#1b2333; --sub:#6b7385; --line:#e6e2d8;
+  --gold:#b6883b; --gold-lt:#e8d4a8;
+  --low:#c1443c; --mid:#c8912b; --high:#1f7a63;
+  --serif:'Fraunces',serif; --sans:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ivory);color:var(--ink);font-family:var(--sans);}
+
+/* ===== TOP BAR ===== */
+.topbar{background:var(--navy);color:#eef1f6;padding:0 36px;}
+.topbar-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand .mark{width:34px;height:34px;border:1.5px solid var(--gold-lt);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:600;color:var(--gold-lt);font-size:17px;}
+.brand h1{font-family:var(--serif);font-weight:600;font-size:20px;margin:0;letter-spacing:.01em;}
+.brand p{margin:0;font-size:11px;color:#9aa6bd;letter-spacing:.08em;text-transform:uppercase;}
+.signature{text-align:right;font-size:11px;color:#9aa6bd;line-height:1.6;}
+.signature b{color:var(--gold-lt);font-family:var(--serif);font-size:13px;font-weight:600;}
+.subbar{max-width:1400px;margin:0 auto;padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.subbar .period{font-size:11.5px;color:#b9c1d4;font-family:var(--mono);letter-spacing:.03em;}
+.subbar .period b{color:var(--gold-lt);}
+
+.wrap{max-width:1400px;margin:0 auto;padding:30px 36px 70px;}
+
+/* ===== UPLOAD BAR ===== */
+.uploader{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:18px 24px;margin-bottom:28px;display:flex;gap:22px;align-items:center;flex-wrap:wrap;box-shadow:0 1px 2px rgba(20,20,10,.03);}
+.uploader .grp{display:flex;flex-direction:column;gap:5px;}
+.uploader label{font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.09em;font-weight:600;}
+.uploader input[type=file]{font-size:12px;color:var(--sub);max-width:230px;}
+.uploader input[type=file]::file-selector-button{background:var(--ivory);color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:6px 10px;font-size:12px;margin-right:8px;cursor:pointer;}
+.btn{background:var(--navy);color:#f2ede0;border:none;font-weight:600;font-size:12.5px;padding:10px 20px;border-radius:3px;cursor:pointer;letter-spacing:.02em;}
+.btn:hover{background:var(--navy2);}
+.btn.gold{background:var(--gold);color:#1b1305;}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600;}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold);}
+.status{font-size:12px;color:var(--sub);}
+.status.ok{color:var(--high);font-weight:600;}
+.status.err{color:var(--low);font-weight:600;}
+
+/* ===== KPI ROW ===== */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:28px;border-radius:4px;overflow:hidden;}
+.kpi{background:var(--paper);padding:22px 24px;}
+.kpi .l{color:var(--sub);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;}
+.kpi .v{font-family:var(--serif);font-size:30px;font-weight:600;margin-top:8px;color:var(--navy);}
+.kpi .s{font-size:11.5px;color:var(--sub);margin-top:6px;}
+
+/* ===== MAIN GRID ===== */
+.maingrid{display:grid;grid-template-columns:280px 1fr;gap:24px;margin-bottom:28px;align-items:start;}
+.donut-card{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:24px;}
+.donut-card h3{margin:0 0 18px;font-family:var(--serif);font-size:15px;font-weight:600;color:var(--navy);}
+.donut-wrap{display:flex;justify-content:center;margin-bottom:16px;}
+.legend{display:flex;flex-direction:column;gap:10px;}
+.legend .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;}
+.legend .k{display:flex;align-items:center;gap:8px;color:var(--sub);}
+.legend .dot{width:9px;height:9px;border-radius:2px;}
+.legend .v{font-family:var(--mono);font-weight:600;color:var(--ink);}
+
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:24px;margin-bottom:24px;}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+.panel-head h3{margin:0;font-family:var(--serif);font-size:16px;font-weight:600;color:var(--navy);}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+select,input[type=text]{background:var(--ivory);border:1px solid var(--line);color:var(--ink);padding:8px 12px;border-radius:3px;font-size:12.5px;font-family:var(--sans);}
+input[type=text]{width:220px;}
+.pill{padding:6px 14px;border-radius:3px;border:1px solid var(--line);font-size:11.5px;cursor:pointer;color:var(--sub);background:var(--ivory);font-weight:600;}
+.pill.active{color:#fff;background:var(--navy);border-color:var(--navy);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;color:var(--sub);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px 12px;border-bottom:2px solid var(--navy);cursor:pointer;white-space:nowrap;}
+th:hover{color:var(--gold);}
+td{padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--ink);}
+tr:nth-child(even) td{background:#fbfaf6;}
+tr:hover td{background:#f3ecd9 !important;}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono);}
+.tag{padding:3px 11px;border-radius:2px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border:1px solid transparent;}
+.tag.low{background:#fbeceb;color:var(--low);border-color:#f0c8c5;}
+.tag.mid{background:#fbf1e2;color:var(--mid);border-color:#eeddb9;}
+.tag.high{background:#e9f4f0;color:var(--high);border-color:#bfe0d4;}
+
+.spoc-group{margin-bottom:26px;}
+.spoc-head{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;border-bottom:2px solid var(--navy);margin-bottom:2px;}
+.spoc-head .name{font-family:var(--serif);font-weight:600;font-size:15.5px;color:var(--navy);}
+.spoc-head .meta{color:var(--sub);font-size:11.5px;font-family:var(--mono);}
+
+.dl-wrap{position:relative;display:inline-block;}
+.dl-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;z-index:20;min-width:170px;box-shadow:0 10px 30px rgba(20,20,10,.12);}
+.dl-menu.open{display:block;}
+.dl-menu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--ink);font-size:12.5px;padding:11px 15px;cursor:pointer;font-family:var(--sans);}
+.dl-menu button:hover{background:var(--ivory);color:var(--gold);}
+
+footer{color:var(--sub);font-size:11px;text-align:center;margin-top:10px;letter-spacing:.02em;}
+@media(max-width:960px){.kpis{grid-template-columns:1fr 1fr;}.maingrid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="mark">eC</div>
+      <div><h1>eCPM Intelligence</h1><p>Revenue Yield &amp; Rate Card Analysis</p></div>
+    </div>
+    <div class="signature">Prepared by<br><b>Saurabh Yadav</b></div>
+  </div>
+  <div class="subbar">
+    <span class="period">Reporting Period &nbsp;<b id="periodBadge">01–09 JUL 2026 · MTD</b></span>
+    <span class="period">Source &nbsp;<b>DRR Sheet</b> × <b>System Revenue Sheet</b></span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="uploader">
+    <div class="grp"><label>DRR Sheet (.csv)</label><input type="file" id="drrFile" accept=".csv"></div>
+    <div class="grp"><label>System Revenue Sheet (.csv)</label><input type="file" id="sysFile" accept=".csv"></div>
+    <button class="btn gold" id="processBtn">Process Sheets</button>
+    <button class="btn ghost" id="resetBtn">Reset to Sample</button>
+    <span class="status" id="uploadStatus"></span>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="maingrid">
+    <div class="donut-card">
+      <h3>eCPM Distribution</h3>
+      <div class="donut-wrap" id="donutWrap"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Advertiser-wise eCPM</h3>
+        <span class="dl-wrap">
+          <button class="btn ghost" id="dlBtnTbl">⬇ Download</button>
+          <span class="dl-menu" id="dlMenuTbl">
+            <button data-fmt="csv">Download as CSV</button>
+            <button data-fmt="png">Download as PNG</button>
+          </span>
+        </span>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="search" placeholder="Search advertiser...">
+        <select id="spocFilter"><option value="">All COD SPOCs</option></select>
+        <span class="pill active" data-cat="">All</span>
+        <span class="pill" data-cat="low">0–5</span>
+        <span class="pill" data-cat="mid">5–10</span>
+        <span class="pill" data-cat="high">10+</span>
+      </div>
+      <div style="overflow-x:auto" id="tblCapture">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-k="advertiser">Advertiser</th>
+            <th data-k="spoc">COD SPOC</th>
+            <th data-k="rate">CPM Rate</th>
+            <th data-k="revenue">Total Revenue</th>
+            <th data-k="impressions">Total Impressions</th>
+            <th data-k="ecpm">eCPM (₹)</th>
+            <th data-k="category">Category</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Grouped by COD SPOC</h3>
+      <span class="dl-wrap">
+        <button class="btn ghost" id="dlBtnSpoc">⬇ Download</button>
+        <span class="dl-menu" id="dlMenuSpoc">
+          <button data-fmt="csv">Download as CSV</button>
+          <button data-fmt="png">Download as PNG</button>
+        </span>
+      </span>
+    </div>
+    <div id="spocGroups"></div>
+  </div>
+
+  <footer>eCPM = Total Revenue (DRR) ÷ Total Impressions (System Revenue) × 1000 &nbsp;|&nbsp; Buckets: 0–5 · 5–10 · 10+</footer>
+</div>
+
+<script>
+const SAMPLE_DATA = [{"advertiser": "Marico", "spoc": "Sirjan Kaur", "rate": 32.0, "revenue": 272791.0, "impressions": 8569786.0, "ecpm": 31.831716684640668, "category": "high"}, {"advertiser": "Namaste India", "spoc": "Sirjan Kaur", "rate": 30.0, "revenue": 18000.0, "impressions": 321413.0, "ecpm": 56.00271302031965, "category": "high"}, {"advertiser": "Amazon", "spoc": "Navneet Kamboj", "rate": 18.0, "revenue": 5749370.0, "impressions": 187888413.0, "ecpm": 30.599917835273853, "category": "high"}, {"advertiser": "Google", "spoc": "Navneet Kamboj", "rate": 51.0, "revenue": 1441075.0, "impressions": 28334200.0, "ecpm": 50.85991487319212, "category": "high"}, {"advertiser": "KFC", "spoc": "Navneet Kamboj", "rate": 53.0, "revenue": 1019634.0, "impressions": 16940734.0, "ecpm": 60.18830116806037, "category": "high"}, {"advertiser": "Snitch", "spoc": "Navneet Kamboj", "rate": 80.0, "revenue": 933614.0, "impressions": 15686755.0, "ecpm": 59.51606944839771, "category": "high"}, {"advertiser": "Flipkart", "spoc": "Navneet Kamboj", "rate": 45.0, "revenue": 778663.0, "impressions": 19199087.0, "ecpm": 40.55729316711779, "category": "high"}, {"advertiser": "Google Play", "spoc": "Navneet Kamboj", "rate": 135.0, "revenue": 328989.0, "impressions": 4977254.0, "ecpm": 66.09849527470368, "category": "high"}, {"advertiser": "DIPR Jharkhand", "spoc": "Saurabh Kumar Yadav", "rate": 25.0, "revenue": 440000.0, "impressions": 17202015.0, "ecpm": 25.578398809674333, "category": "high"}, {"advertiser": "LIC Of India", "spoc": "Saurabh Kumar Yadav", "rate": 35.0, "revenue": 112500.0, "impressions": 4365301.0, "ecpm": 25.771418740654997, "category": "high"}, {"advertiser": "Grab", "spoc": "Saurabh Kumar Yadav", "rate": 210.0, "revenue": 249709.0, "impressions": 1352159.0, "ecpm": 184.67428756529372, "category": "high"}, {"advertiser": "TATA MOTORS LIMITED", "spoc": "Saurabh Kumar Yadav", "rate": 150.0, "revenue": 51802.0, "impressions": 345603.0, "ecpm": 149.88874517871662, "category": "high"}, {"advertiser": "ULTRAVIOLETTE AUTOMOTIVE", "spoc": "Saurabh Kumar Yadav", "rate": 8.0, "revenue": 108168.0, "impressions": 2694007.0, "ecpm": 40.15134333355481, "category": "high"}, {"advertiser": "OPPO MOBILES INDIA PRIVATE LIMITED", "spoc": "Pooja Lokeshkumar", "rate": 76.8, "revenue": 946861.0, "impressions": 12842783.0, "ecpm": 73.72708859131232, "category": "high"}, {"advertiser": "Apple", "spoc": "Pooja Lokeshkumar", "rate": 90.0, "revenue": 1229188.0, "impressions": 12857118.0, "ecpm": 95.60369594492327, "category": "high"}, {"advertiser": "Carrier", "spoc": "Pooja Lokeshkumar", "rate": 110.0, "revenue": 230901.0, "impressions": 2033921.0, "ecpm": 113.52505824955837, "category": "high"}, {"advertiser": "Midea", "spoc": "Pooja Lokeshkumar", "rate": 110.0, "revenue": 93258.0, "impressions": 881693.0, "ecpm": 105.77151003807447, "category": "high"}, {"advertiser": "Samsung", "spoc": "Pooja Lokeshkumar", "rate": null, "revenue": 1600000.0, "impressions": 155977714.0, "ecpm": 10.25787568600986, "category": "high"}, {"advertiser": "Sandisk", "spoc": "Sagar Bagalkoti", "rate": 120.0, "revenue": 432000.0, "impressions": 3750485.0, "ecpm": 115.185102726714, "category": "high"}, {"advertiser": "HSBC", "spoc": "Sagar Bagalkoti", "rate": 10.0, "revenue": 25150.0, "impressions": 5031608.0, "ecpm": 4.998402101276571, "category": "low"}, {"advertiser": "Axis Bank Limited", "spoc": "Sagar Bagalkoti", "rate": 56.0, "revenue": 81544.0, "impressions": 1460652.0, "ecpm": 55.82712377760068, "category": "high"}, {"advertiser": "UTI Mutual Fund", "spoc": "Sagar Bagalkoti", "rate": 175.0, "revenue": 31942.0, "impressions": 2320688.0, "ecpm": 13.764021703908496, "category": "high"}, {"advertiser": "Lenovo", "spoc": "Sagar Bagalkoti", "rate": 120.0, "revenue": 171000.0, "impressions": 1347591.0, "ecpm": 126.89310035463284, "category": "high"}, {"advertiser": "Max Life Insurance", "spoc": "Sagar Bagalkoti", "rate": 12.0, "revenue": 1000.0, "impressions": 457882.0, "ecpm": 2.1839687954538505, "category": "low"}, {"advertiser": "ICICI", "spoc": "Sagar Bagalkoti", "rate": 88.0, "revenue": 180733.0, "impressions": 2057241.0, "ecpm": 87.85212816582987, "category": "high"}, {"advertiser": "Boat", "spoc": "Sagar Bagalkoti", "rate": 8.0, "revenue": 800.0, "impressions": 505373.0, "ecpm": 1.5829891980774595, "category": "low"}, {"advertiser": "ICICI Lombard", "spoc": "Sagar Bagalkoti", "rate": 134.0, "revenue": 45000.0, "impressions": 1595795.0, "ecpm": 28.199110788039818, "category": "high"}, {"advertiser": "Star Health", "spoc": "Sagar Bagalkoti", "rate": 250.0, "revenue": 0, "impressions": 1611.0, "ecpm": 0.0, "category": "low"}, {"advertiser": "Delta Exchange", "spoc": "Sagar Bagalkoti", "rate": 6000.0, "revenue": 0, "impressions": 1483727.0, "ecpm": 0.0, "category": "low"}, {"advertiser": "Airtel", "spoc": "Saurabh Kumar Yadav", "rate": 65.0, "revenue": 105000.0, "impressions": 1584805.0, "ecpm": 66.25420793094419, "category": "high"}, {"advertiser": "AB Dist", "spoc": "Sirjan Kaur", "rate": 60.0, "revenue": 131241.0, "impressions": 2200728.0, "ecpm": 59.63526614829274, "category": "high"}, {"advertiser": "DVE", "spoc": "Sirjan Kaur", "rate": 60.0, "revenue": 500000.0, "impressions": 12267054.0, "ecpm": 40.75958253709489, "category": "high"}, {"advertiser": "JSW Paints", "spoc": "Sirjan Kaur", "rate": 30.0, "revenue": 18000.0, "impressions": 293335.0, "ecpm": 61.363287708592566, "category": "high"}, {"advertiser": "DAVP", "spoc": "Saurabh Kumar Yadav", "rate": null, "revenue": 37000.0, "impressions": 372326.0, "ecpm": 99.37527865365297, "category": "high"}];
+let DATA = JSON.parse(JSON.stringify(SAMPLE_DATA));
+let state = {search:'', spoc:'', cat:'', sortKey:'ecpm', sortDir:-1};
+
+function catOf(e){ if(e===null) return 'na'; if(e<5) return 'low'; if(e<10) return 'mid'; return 'high'; }
+const catLabel = {low:'0–5', mid:'5–10', high:'10+', na:'N/A'};
+const catColor = {low:'#c1443c', mid:'#c8912b', high:'#1f7a63'};
+
+function fmtCompact(n){
+  const sign = n<0?'-':''; n = Math.abs(n);
+  let out;
+  if(n>=1e6) out = (n/1e6).toFixed(2)+'M';
+  else if(n>=1e3) out = (n/1e3).toFixed(1)+'K';
+  else out = n.toFixed(0);
+  return sign + '₹' + out;
+}
+function fmtImp(n){
+  const sign = n<0?'-':''; n=Math.abs(n);
+  if(n>=1e6) return sign+(n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return sign+(n/1e3).toFixed(1)+'K';
+  return sign+n.toFixed(0);
+}
+const fmtE = n => n===null ? '—' : n.toFixed(2);
+
+function toNum(s){
+  if(s===undefined||s===null) return null;
+  s = String(s).trim();
+  if(s===''||s==='#N/A') return null;
+  s = s.replace(/,/g,'').replace(/[^0-9.\-]/g,'');
+  if(s==='') return null;
+  const v = parseFloat(s);
+  return isNaN(v)? null : v;
+}
+
+function processCSVs(drrText, sysText){
+  const drr = Papa.parse(drrText, {header:true, skipEmptyLines:true}).data;
+  const sys = Papa.parse(sysText, {header:true, skipEmptyLines:true}).data;
+  const impMap = {};
+  sys.forEach(row=>{
+    const adv = (row.advertiser_name||'').trim();
+    if(!adv) return;
+    impMap[adv] = (impMap[adv]||0) + (toNum(row.Ads_Impressions)||0);
+  });
+  const out = [];
+  drr.forEach(row=>{
+    const adv = (row['Advertiser Name (Ad Manager)']||'').trim();
+    if(!adv) return;
+    const spoc = (row['COD SPOC']||'Unassigned').trim() || 'Unassigned';
+    const rate = toNum(row['Rate']);
+    const revenue = toNum(row['Total budget Delivery']) || 0;
+    const impressions = impMap[adv] || 0;
+    const ecpm = impressions ? (revenue/impressions*1000) : null;
+    out.push({advertiser:adv, spoc, rate, revenue, impressions, ecpm, category: catOf(ecpm)});
+  });
+  return out;
+}
+
+function renderKPIs(){
+  const totalRev = DATA.reduce((a,d)=>a+d.revenue,0);
+  const totalImp = DATA.reduce((a,d)=>a+d.impressions,0);
+  const overallEcpm = totalImp? (totalRev/totalImp*1000) : 0;
+  const spocs = new Set(DATA.map(d=>d.spoc)).size;
+  const kpis = [
+    {l:'Total Revenue', v:fmtCompact(totalRev), s:'DRR · Total Budget Delivery'},
+    {l:'Total Impressions', v:fmtImp(totalImp), s:'System Revenue sheet'},
+    {l:'Blended eCPM', v:'₹'+overallEcpm.toFixed(2), s:'Across '+DATA.length+' advertisers'},
+    {l:'COD SPOCs', v:spocs, s:'Active this period'},
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="s">${k.s}</div></div>`).join('');
+}
+
+function renderDonut(){
+  const total = DATA.length || 1;
+  const counts = {low:0,mid:0,high:0};
+  DATA.forEach(d=>{ if(counts[d.category]!==undefined) counts[d.category]++; });
+  const order = ['high','mid','low'];
+  let acc = 0;
+  const R=60, C=2*Math.PI*R;
+  const segs = order.map(k=>{
+    const frac = counts[k]/total;
+    const dash = frac*C;
+    const seg = `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${catColor[k]}" stroke-width="20" stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 80 80)"/>`;
+    acc += dash;
+    return seg;
+  }).join('');
+  document.getElementById('donutWrap').innerHTML = `
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      ${segs}
+      <text x="80" y="76" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="600" fill="#1b2333">${total}</text>
+      <text x="80" y="94" text-anchor="middle" font-family="Inter" font-size="10" fill="#6b7385" letter-spacing=".05em">ADVERTISERS</text>
+    </svg>`;
+  document.getElementById('legend').innerHTML = ['low','mid','high'].map(k=>{
+    const pct = total? ((counts[k]/total)*100).toFixed(0) : 0;
+    return `<div class="row"><span class="k"><span class="dot" style="background:${catColor[k]}"></span>eCPM ${catLabel[k]}</span><span class="v">${counts[k]} · ${pct}%</span></div>`;
+  }).join('');
+}
+
+function populateSpocFilter(){
+  const sel = document.getElementById('spocFilter');
+  sel.innerHTML = '<option value="">All COD SPOCs</option>';
+  [...new Set(DATA.map(d=>d.spoc))].sort().forEach(s=>{
+    const o = document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o);
+  });
+}
+
+function filtered(){
+  return DATA.filter(d=>
+    (!state.search || d.advertiser.toLowerCase().includes(state.search)) &&
+    (!state.spoc || d.spoc===state.spoc) &&
+    (!state.cat || d.category===state.cat)
+  ).sort((a,b)=>{
+    let x=a[state.sortKey], y=b[state.sortKey];
+    if(x===null) x=-1; if(y===null) y=-1;
+    if(typeof x === 'string') return x.localeCompare(y)*state.sortDir;
+    return (x-y)*state.sortDir;
+  });
+}
+
+function renderTable(){
+  const rows = filtered();
+  document.querySelector('#tbl tbody').innerHTML = rows.map(d=>`
+    <tr>
+      <td>${d.advertiser}</td>
+      <td>${d.spoc}</td>
+      <td class="num">${d.rate!==null? '₹'+d.rate : '—'}</td>
+      <td class="num">${fmtCompact(d.revenue)}</td>
+      <td class="num">${fmtImp(d.impressions)}</td>
+      <td class="num">${fmtE(d.ecpm)}</td>
+      <td><span class="tag ${d.category}">${catLabel[d.category]}</span></td>
+    </tr>`).join('');
+}
+
+function renderSpocGroups(){
+  const groups = {};
+  filtered().forEach(d=>{ (groups[d.spoc]=groups[d.spoc]||[]).push(d); });
+  const html = Object.keys(groups).sort().map(spoc=>{
+    const list = groups[spoc].sort((a,b)=>b.ecpm-a.ecpm);
+    const rev = list.reduce((a,d)=>a+d.revenue,0);
+    const imp = list.reduce((a,d)=>a+d.impressions,0);
+    const ecpm = imp? (rev/imp*1000).toFixed(2):'—';
+    const rows = list.map(d=>`<tr><td>${d.advertiser}</td><td class="num">${fmtCompact(d.revenue)}</td><td class="num">${fmtImp(d.impressions)}</td><td class="num">${fmtE(d.ecpm)}</td><td><span class="tag ${d.category}">${catLabel[d.category]}</span></td></tr>`).join('');
+    return `<div class="spoc-group"><div class="spoc-head"><span class="name">${spoc}</span><span class="meta">${list.length} advertisers · Blended eCPM ₹${ecpm}</span></div>
+    <table><thead><tr><th>Advertiser</th><th>Revenue</th><th>Impressions</th><th>eCPM (₹)</th><th>Category</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }).join('');
+  document.getElementById('spocGroups').innerHTML = html || '<p style="color:var(--sub)">No records match filters.</p>';
+}
+
+function renderAll(){ renderKPIs(); renderDonut(); renderTable(); renderSpocGroups(); }
+
+function downloadCSV(rows, headers, filename){
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const lines = [headers.map(h=>esc(h.label)).join(',')];
+  rows.forEach(r=> lines.push(headers.map(h=>esc(h.get(r))).join(',')) );
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function downloadPNG(el, filename){
+  html2canvas(el, {backgroundColor:'#ffffff', scale:2}).then(canvas=>{
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = filename;
+    a.click();
+  });
+}
+function setupDlMenu(btnId, menuId, onCSV, onPNG){
+  const btn = document.getElementById(btnId), menu = document.getElementById(menuId);
+  btn.addEventListener('click', e=>{ e.stopPropagation(); document.querySelectorAll('.dl-menu').forEach(m=>{ if(m!==menu) m.classList.remove('open'); }); menu.classList.toggle('open'); });
+  menu.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{
+    if(b.dataset.fmt==='csv') onCSV(); else onPNG();
+    menu.classList.remove('open');
+  }));
+  document.addEventListener('click', ()=> menu.classList.remove('open'));
+}
+
+document.getElementById('search').addEventListener('input', e=>{ state.search=e.target.value.toLowerCase(); renderTable(); renderSpocGroups(); });
+document.getElementById('spocFilter').addEventListener('change', e=>{ state.spoc=e.target.value; renderTable(); renderSpocGroups(); });
+document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click', ()=>{
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  p.classList.add('active');
+  state.cat = p.dataset.cat; renderTable(); renderSpocGroups();
+}));
+document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click', ()=>{
+  const k = th.dataset.k;
+  state.sortDir = (state.sortKey===k) ? -state.sortDir : -1;
+  state.sortKey = k; renderTable();
+}));
+
+setupDlMenu('dlBtnTbl','dlMenuTbl',
+  ()=> downloadCSV(filtered(), [
+    {label:'Advertiser', get:r=>r.advertiser},
+    {label:'COD SPOC', get:r=>r.spoc},
+    {label:'CPM Rate', get:r=>r.rate??''},
+    {label:'Total Revenue', get:r=>Math.round(r.revenue)},
+    {label:'Total Impressions', get:r=>Math.round(r.impressions)},
+    {label:'eCPM', get:r=>r.ecpm!==null?r.ecpm.toFixed(2):''},
+    {label:'Category', get:r=>catLabel[r.category]},
+  ], 'ecpm_advertiser_wise.csv'),
+  ()=> downloadPNG(document.getElementById('tblCapture'), 'ecpm_advertiser_wise.png')
+);
+setupDlMenu('dlBtnSpoc','dlMenuSpoc',
+  ()=> downloadCSV(filtered(), [
+    {label:'COD SPOC', get:r=>r.spoc},
+    {label:'Advertiser', get:r=>r.advertiser},
+    {label:'Total Revenue', get:r=>Math.round(r.revenue)},
+    {label:'Total Impressions', get:r=>Math.round(r.impressions)},
+    {label:'eCPM', get:r=>r.ecpm!==null?r.ecpm.toFixed(2):''},
+    {label:'Category', get:r=>catLabel[r.category]},
+  ], 'ecpm_spoc_wise.csv'),
+  ()=> downloadPNG(document.getElementById('spocGroups'), 'ecpm_spoc_wise.png')
+);
+
+document.getElementById('processBtn').addEventListener('click', ()=>{
+  const drrF = document.getElementById('drrFile').files[0];
+  const sysF = document.getElementById('sysFile').files[0];
+  const statusEl = document.getElementById('uploadStatus');
+  if(!drrF || !sysF){ statusEl.textContent='Please select both files.'; statusEl.className='status err'; return; }
+  statusEl.textContent='Processing...'; statusEl.className='status';
+  Promise.all([drrF.text(), sysF.text()]).then(([drrText, sysText])=>{
+    try{
+      DATA = processCSVs(drrText, sysText);
+      state = {search:'', spoc:'', cat:'', sortKey:'ecpm', sortDir:-1};
+      document.getElementById('search').value='';
+      document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      document.querySelector('.pill[data-cat=""]').classList.add('active');
+      populateSpocFilter();
+      renderAll();
+      statusEl.textContent = `✓ Loaded ${DATA.length} advertisers`; statusEl.className='status ok';
+    }catch(err){
+      statusEl.textContent='Error parsing files: '+err.message; statusEl.className='status err';
+    }
+  });
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  DATA = JSON.parse(JSON.stringify(SAMPLE_DATA));
+  state = {search:'', spoc:'', cat:'', sortKey:'ecpm', sortDir:-1};
+  document.getElementById('search').value='';
+  document.getElementById('uploadStatus').textContent='';
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  document.querySelector('.pill[data-cat=""]').classList.add('active');
+  populateSpocFilter();
+  renderAll();
+});
+
+populateSpocFilter();
+renderAll();
+</script>
+</body>
+</html>
